@@ -1,0 +1,32 @@
+{
+  "lightTank": {
+    "label_uk": "Легкі танки",
+    "shadow": "#294324",
+    "midtone": "#6FAE52",
+    "highlight": "#D7F2BD"
+  },
+  "mediumTank": {
+    "label_uk": "Середні танки",
+    "shadow": "#5A4716",
+    "midtone": "#D4A928",
+    "highlight": "#FFF0A0"
+  },
+  "heavyTank": {
+    "label_uk": "Важкі танки",
+    "shadow": "#484940",
+    "midtone": "#AAA99A",
+    "highlight": "#F1F0DF"
+  },
+  "AT-SPG": {
+    "label_uk": "ПТ-САУ",
+    "shadow": "#293047",
+    "midtone": "#5E6D9B",
+    "highlight": "#C1CCF0"
+  },
+  "SPG": {
+    "label_uk": "САУ",
+    "shadow": "#4C2D20",
+    "midtone": "#9C6245",
+    "highlight": "#E9B99B"
+  }
+}
