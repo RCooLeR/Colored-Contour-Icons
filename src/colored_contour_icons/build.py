@@ -7,6 +7,7 @@ import hashlib
 import io
 import json
 import math
+import re
 import shutil
 import subprocess
 import sys
@@ -219,6 +220,7 @@ def build_battle_atlas_addon(
     icons: dict[str, str],
     output_root: Path,
     generated_from: str,
+    mod_version: str = __version__,
 ) -> tuple[Path, dict]:
     """Build the patch-specific classic players-panel add-on.
 
@@ -234,7 +236,7 @@ def build_battle_atlas_addon(
     atlas_dir = stage / "res" / "gui" / "flash" / "atlases"
     atlas = build_atlas(client, "battleAtlas", contour_dir, icons, atlas_dir)
     manifest = {
-        "modVersion": __version__,
+        "modVersion": mod_version,
         "generatedFromClientVersion": generated_from,
         "compatibility": {
             "exactClientVersion": generated_from,
@@ -256,11 +258,11 @@ def build_battle_atlas_addon(
   <name>RCooLeR Colored Contour Icons - Battle Atlas</name>
   <description>Client-specific battleAtlas add-on for classic players panels.</description>
 </root>
-""".format(version=__version__)
+""".format(version=mod_version)
     (stage / "meta.xml").write_text(meta, encoding="utf-8", newline="\n")
     package_path = output_root / (
         "com.rcooler.colored_contour_icons_battle_atlas_%s_wg%s.wotmod"
-        % (__version__, generated_from)
+        % (mod_version, generated_from)
     )
     _write_package(stage, package_path)
     return package_path, manifest
@@ -378,7 +380,10 @@ def build(
     palette_path: Path,
     include_atlases: bool = False,
     python2: Path | None = None,
+    mod_version: str = __version__,
 ) -> dict:
+    if not re.fullmatch(r"\d+\.\d+\.\d+(?:-[0-9A-Za-z]+(?:[.-][0-9A-Za-z]+)*)?", mod_version):
+        raise ValueError("Invalid mod version: %r" % mod_version)
     client = ClientData(game_root)
     palette = _load_palette(palette_path)
     vehicles = client.vehicles()
@@ -410,7 +415,7 @@ def build(
 
     generated_from = client.client_version()
     manifest = {
-        "modVersion": __version__,
+        "modVersion": mod_version,
         "compatibility": {
             "clientMajor": 2,
             "supportedVersions": "2.x",
@@ -435,11 +440,11 @@ def build(
   <name>RCooLeR Colored Contour Icons</name>
   <description>Class-coloured vehicle contour icons generated from the current client.</description>
 </root>
-""".format(version=__version__)
+""".format(version=mod_version)
     (stage / "meta.xml").write_text(meta, encoding="utf-8", newline="\n")
 
     output_root.mkdir(parents=True, exist_ok=True)
-    package_name = "com.rcooler.colored_contour_icons_%s" % __version__
+    package_name = "com.rcooler.colored_contour_icons_%s" % mod_version
     package_path = output_root / (package_name + ".wotmod")
     # WoT resource packages are ZIP containers with stored entries. In particular,
     # large DDS atlases must not use Deflate: the client maps/streams these assets
@@ -453,6 +458,7 @@ def build(
             icon_manifest,
             output_root,
             generated_from,
+            mod_version=mod_version,
         )
         manifest["battleAtlasAddon"] = {
             "package": str(atlas_package),
@@ -477,6 +483,10 @@ def main(argv: list[str] | None = None) -> int:
         help="Build a separate current-client battleAtlas add-on for classic ears",
     )
     parser.add_argument("--python2", type=Path)
+    parser.add_argument(
+        "--mod-version", default=__version__,
+        help="Build an isolated release candidate without changing the stable source version",
+    )
     arguments = parser.parse_args(argv)
     result = build(
         arguments.game_root,
@@ -484,6 +494,7 @@ def main(argv: list[str] | None = None) -> int:
         arguments.palette,
         include_atlases=arguments.include_atlases,
         python2=arguments.python2,
+        mod_version=arguments.mod_version,
     )
     summary = {key: value for key, value in result.items() if key != "icons"}
     print(json.dumps(summary, ensure_ascii=False, indent=2))

@@ -6,13 +6,16 @@ import io
 import os
 import re
 import zipfile
+from contextlib import ExitStack
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Iterator
+from xml.etree import ElementTree
 
 from PIL import Image
 
 from .bxml import loads as load_bxml
+from .package_paths import gui_package_sort_key
 
 
 VEHICLE_CLASSES = ("lightTank", "mediumTank", "heavyTank", "AT-SPG", "SPG")
@@ -42,8 +45,23 @@ class ClientData:
             raise FileNotFoundError("World of Tanks packages not found: %s" % self.packages)
 
     def client_version(self) -> str:
+        # Preloaded clients may have no mods directory, and an installed client
+        # may retain a newer/older test directory.  The client metadata is the
+        # authoritative version whenever it contains a valid patch number.
+        version_file = self.root / "version.xml"
+        if version_file.is_file():
+            try:
+                version_text = ElementTree.parse(version_file).findtext("version", "")
+                match = re.fullmatch(r"(?:v\.?)?(\d+(?:\.\d+){3})(?:\s+.*)?", version_text.strip())
+                if match:
+                    return match.group(1)
+            except (ElementTree.ParseError, OSError):
+                pass
         mods = self.root / "mods"
-        versions = [path.name for path in mods.iterdir() if path.is_dir() and re.match(r"^\d+(?:\.\d+){3}$", path.name)]
+        versions = [
+            path.name for path in mods.iterdir()
+            if path.is_dir() and re.fullmatch(r"\d+(?:\.\d+){3}", path.name)
+        ] if mods.is_dir() else []
         if not versions:
             raise FileNotFoundError("Could not detect the active client version")
         return max(versions, key=lambda value: tuple(map(int, value.split("."))))
@@ -80,21 +98,25 @@ class ClientData:
     def contours(self) -> Iterator[tuple[str, bytes, str]]:
         """Yield every current contour once; later GUI package parts win."""
         selected: dict[str, tuple[Path, str]] = {}
-        package_paths = sorted(self.packages.glob("gui-part*.pkg"))
-        for package_path in package_paths:
-            with zipfile.ZipFile(package_path) as package:
+        package_paths = sorted(self.packages.glob("gui-part*.pkg"), key=gui_package_sort_key)
+        # GUI archives contain thousands of entries. Reopening one for every
+        # contour repeatedly reparses its central directory during generation.
+        with ExitStack() as stack:
+            packages = {}
+            for package_path in package_paths:
+                package = stack.enter_context(zipfile.ZipFile(package_path))
+                packages[package_path] = package
                 for member in package.namelist():
                     if not member.startswith(CONTOUR_PREFIX) or not member.lower().endswith(".png"):
                         continue
                     selected[Path(member).stem] = (package_path, member)
-        for resource_name in sorted(selected):
-            package_path, member = selected[resource_name]
-            with zipfile.ZipFile(package_path) as package:
-                yield resource_name, package.read(member), package_path.name
+            for resource_name in sorted(selected):
+                package_path, member = selected[resource_name]
+                yield resource_name, packages[package_path].read(member), package_path.name
 
     def contour_image(self, resource_name: str) -> Image.Image:
         wanted = CONTOUR_PREFIX + resource_name + ".png"
-        for package_path in sorted(self.packages.glob("gui-part*.pkg"), reverse=True):
+        for package_path in sorted(self.packages.glob("gui-part*.pkg"), key=gui_package_sort_key, reverse=True):
             with zipfile.ZipFile(package_path) as package:
                 try:
                     return Image.open(io.BytesIO(package.read(wanted))).convert("RGBA")
@@ -104,7 +126,7 @@ class ClientData:
 
     def read_gui_resource(self, resource_path: str) -> tuple[bytes, str]:
         """Read a GUI resource, preferring the highest numbered package part."""
-        for package_path in sorted(self.packages.glob("gui-part*.pkg"), reverse=True):
+        for package_path in sorted(self.packages.glob("gui-part*.pkg"), key=gui_package_sort_key, reverse=True):
             with zipfile.ZipFile(package_path) as package:
                 try:
                     return package.read(resource_path), package_path.name

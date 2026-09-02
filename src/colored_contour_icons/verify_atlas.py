@@ -8,10 +8,12 @@ import json
 import zipfile
 from pathlib import Path
 
+from .package_paths import gui_package_sort_key
+
 
 def _read_client_gui_resource(game_root: Path, resource: str) -> bytes:
     packages = game_root / "res" / "packages"
-    for package in sorted(packages.glob("gui-part*.pkg"), reverse=True):
+    for package in sorted(packages.glob("gui-part*.pkg"), key=gui_package_sort_key, reverse=True):
         with zipfile.ZipFile(package) as archive:
             try:
                 return archive.read(resource)
