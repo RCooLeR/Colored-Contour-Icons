@@ -31,8 +31,8 @@ RC-збірку можна створити без зміни стабільно
 
 ```powershell
 $env:PYTHONPATH = "$PWD\src"
-$candidateClient = 'D:\staging\WoT-2.4.0.0'
-$candidateOutput = "$PWD\build\candidate-2.4.0.0"
+$candidateClient = 'D:\staging\WoT-2.4.0.1'
+$candidateOutput = "$PWD\build\candidate-2.4.0.1"
 py -3 -m colored_contour_icons.build `
   --game-root $candidateClient --output $candidateOutput `
   --include-atlases --mod-version 0.3.4-rc.1
@@ -40,7 +40,7 @@ py -3 -m colored_contour_icons.build `
 py -3 tools\audit_candidate.py `
   --baseline 'D:\Games\World_of_Tanks' --candidate $candidateClient `
   --core "$candidateOutput\com.rcooler.colored_contour_icons_0.3.4-rc.1.wotmod" `
-  --addon "$candidateOutput\com.rcooler.colored_contour_icons_battle_atlas_0.3.4-rc.1_wg2.4.0.0.wotmod" `
+  --addon "$candidateOutput\com.rcooler.colored_contour_icons_battle_atlas_0.3.4-rc.1_wg2.4.0.1.wotmod" `
   --output "$candidateOutput\compatibility-audit.json"
 py -3 -m pytest -q
 ```
