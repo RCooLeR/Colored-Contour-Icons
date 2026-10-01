@@ -34,17 +34,17 @@
 
 ## Завантаження та встановлення
 
-[Завантажити готовий комплект 0.3.4 для WoT 2.4.0.1](https://github.com/RCooLeR/Colored-Contour-Icons/releases/download/v0.3.4/Colored_Contour_Icons_0.3.4_WoT_2.4.0.1.zip)
+[Завантажити готовий комплект 0.3.5 для WoT 2.4.0.2](https://github.com/RCooLeR/Colored-Contour-Icons/releases/download/v0.3.5/Colored_Contour_Icons_0.3.5_WoT_2.4.0.2.zip)
 
 Закрийте World of Tanks і розпакуйте ZIP у кореневу папку гри зі збереженням
 структури каталогів. Архів уже містить обидва потрібні файли у
-`mods/2.4.0.1/`. Зовнішніх залежностей мод не має.
+`mods/2.4.0.2/`. Зовнішніх залежностей мод не має.
 
 Для ручного встановлення скопіюйте обидва файли до
 `mods/<поточна версія клієнта>/`:
 
-- `com.rcooler.colored_contour_icons_0.3.4.wotmod` — PNG-пакет для гілки 2.x;
-- `com.rcooler.colored_contour_icons_battle_atlas_0.3.4_wg2.4.0.1.wotmod` —
+- `com.rcooler.colored_contour_icons_0.3.5.wotmod` — PNG-пакет для гілки 2.x;
+- `com.rcooler.colored_contour_icons_battle_atlas_0.3.5_wg2.4.0.2.wotmod` —
   класичні бойові «вуха» для точно вказаного патча.
 
 Повна назва папки визначається самим WoT; це вимога завантажувача гри. Основний

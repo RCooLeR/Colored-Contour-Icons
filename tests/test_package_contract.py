@@ -1,3 +1,4 @@
+import inspect
 import json
 import zipfile
 
@@ -7,8 +8,9 @@ from colored_contour_icons import __version__
 from colored_contour_icons.build import build, build_battle_atlas_addon
 
 
-def test_ears_release_version_is_current():
-    assert __version__ == "0.3.3"
+def test_builders_default_to_current_release_version():
+    for builder in (build, build_battle_atlas_addon):
+        assert inspect.signature(builder).parameters["mod_version"].default == __version__
 
 
 def test_battle_atlas_addon_contains_no_code_or_marker_atlas(tmp_path, monkeypatch):
@@ -65,9 +67,11 @@ def test_candidate_version_is_consistent_and_does_not_change_stable_version(tmp_
     monkeypatch.setattr("colored_contour_icons.build.build_class_previews", lambda *args: None)
     palette = tmp_path / "palette.json"
     palette.write_text("{}")
+    stable_version = __version__
     result = build(tmp_path, tmp_path / "output", palette,
                    include_atlases=True, mod_version="0.3.4-rc.1")
-    assert __version__ == "0.3.3"
+    from colored_contour_icons import __version__ as version_after_build
+    assert version_after_build == stable_version
     for package_path in (result["package"], result["battleAtlasAddon"]["package"]):
         assert "0.3.4-rc.1" in package_path
         with zipfile.ZipFile(package_path) as archive:
